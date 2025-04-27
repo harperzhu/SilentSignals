@@ -50,8 +50,8 @@ train_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', '
 val_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'label_mapped'])
 
 # Create DataLoader
-train_dataloader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=16)
+train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+val_dataloader = DataLoader(val_dataset, batch_size=4)
 
 # TRAINING
 optimizer = AdamW(model.parameters(), lr=2e-5)
@@ -60,7 +60,9 @@ loss_fn = CrossEntropyLoss()
 model.train()
 for epoch in range(3):  # train for 3 epochs
     total_loss = 0
-    for batch in train_dataloader:        
+    for batch_idx, batch in enumerate(train_dataloader):   
+        if batch_idx % 10 == 0:
+            print(f"Loading batch {batch_idx}/{len(train_dataloader)}")
         inputs = {
             "input_ids": batch["input_ids"],
             "attention_mask": batch["attention_mask"]
