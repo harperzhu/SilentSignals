@@ -1,5 +1,5 @@
 import pandas as pd
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification,Trainer, TrainingArguments
 from datasets import Dataset
 from torch.optim import AdamW
 from torch.nn import CrossEntropyLoss
@@ -78,3 +78,24 @@ for epoch in range(3):  # train for 3 epochs
         total_loss += loss.item()
 
     print(f"Epoch {epoch + 1}, Loss: {total_loss:.4f}")
+
+
+training_args = TrainingArguments(
+    output_dir="./saved_silentsignals",
+    per_device_train_batch_size=4,
+    num_train_epochs=3,
+    logging_dir="./logs",
+    save_strategy="epoch",
+)
+
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=train_dataset,
+    eval_dataset=val_dataset,
+)
+
+trainer.train()
+
+trainer.save_model("./saved_silentsignals")
+
