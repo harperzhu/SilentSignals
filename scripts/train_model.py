@@ -52,29 +52,34 @@ train_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', '
 val_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'labels'])
 
 # Create DataLoader
-train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True,num_workers=4)
-val_dataloader = DataLoader(val_dataset, batch_size=4,num_workers=4)
+train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+val_dataloader = DataLoader(val_dataset, batch_size=4)
 
 # TRAINING
 optimizer = AdamW(model.parameters(), lr=2e-5)
 loss_fn = CrossEntropyLoss()
 
-training_args = TrainingArguments(
-    output_dir="./saved_silentsignals",
-    per_device_train_batch_size=4,
-    num_train_epochs=3,
-    logging_dir="./logs",
-    save_strategy="epoch",
-)
+model.train()
+for epoch in range(3):  # train for 3 epochs
+    total_loss = 0
+    for batch_idx, batch in enumerate(train_dataloader):   
+        if batch_idx % 10 == 0:
+            print(f"Loading batch {batch_idx}/{len(train_dataloader)}")
+        inputs = {
+            "input_ids": batch["input_ids"],
+            "attention_mask": batch["attention_mask"]
+        }
+        labels = batch["labels"]
+        outputs = model(**inputs)
+        loss = loss_fn(outputs.logits, labels)
 
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_dataset,
-    eval_dataset=val_dataset,
-)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-trainer.train()
+        total_loss += loss.item()
 
-trainer.save_model("./saved_silentsignals")
+    print(f"Epoch {epoch + 1}, Loss: {total_loss:.4f}")
 
+torch.save(model.state_dict(), "saved_model.pth")
+print("Model saved successfully!")
