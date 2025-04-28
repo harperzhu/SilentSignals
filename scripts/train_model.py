@@ -22,7 +22,6 @@ val_df['label_mapped'] = val_df['label_mapped'].map(label2id)
 train_dataset = Dataset.from_pandas(train_df)
 val_dataset = Dataset.from_pandas(val_df)
 
-
 model_name = "distilbert-base-uncased"
 # Initialize tokenizer
 tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -46,39 +45,19 @@ def tokenize_function(examples):
 train_dataset = train_dataset.map(tokenize_function, batched=True, remove_columns=["text"])
 val_dataset = val_dataset.map(tokenize_function, batched=True, remove_columns=["text"])
 
-train_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'label_mapped'])
-val_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'label_mapped'])
+train_dataset = train_dataset.rename_column("label_mapped", "labels")
+val_dataset = val_dataset.rename_column("label_mapped", "labels")
+
+train_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'labels'])
+val_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'labels'])
 
 # Create DataLoader
-train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=4)
+train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True,num_workers=4)
+val_dataloader = DataLoader(val_dataset, batch_size=4,num_workers=4)
 
 # TRAINING
 optimizer = AdamW(model.parameters(), lr=2e-5)
 loss_fn = CrossEntropyLoss()
-
-model.train()
-for epoch in range(3):  # train for 3 epochs
-    total_loss = 0
-    for batch_idx, batch in enumerate(train_dataloader):   
-        if batch_idx % 10 == 0:
-            print(f"Loading batch {batch_idx}/{len(train_dataloader)}")
-        inputs = {
-            "input_ids": batch["input_ids"],
-            "attention_mask": batch["attention_mask"]
-        }
-        labels = batch["label_mapped"]
-        outputs = model(**inputs)
-        loss = loss_fn(outputs.logits, labels)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        total_loss += loss.item()
-
-    print(f"Epoch {epoch + 1}, Loss: {total_loss:.4f}")
-
 
 training_args = TrainingArguments(
     output_dir="./saved_silentsignals",
