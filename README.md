@@ -45,7 +45,7 @@ Loss Function: CrossEntropyLoss
 
 Training Epochs: 3 (default)
 
-3. Tech stack map
+## Tech stack map
 
 RAW TEXT DATA
 ↓
